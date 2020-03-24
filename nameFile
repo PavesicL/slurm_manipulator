@@ -1,0 +1,23 @@
+#SENDING JOBS
+#give a name in the python formatted string format and specify the parameters and their types (sweep or case-by-case)
+
+name = U1_Ec{0}_n0{1}_gamma{2}
+
+params{ 
+	Ec case
+	n0 sweep
+	gamma sweep
+}endparams
+
+
+batchparams{
+	OMP_NUM_THREADS 3
+	cpus-per-task 4
+	path ~/git_repos/tensor
+}endbatchparams
+
+#PARSING RESULTS
+#results will be saved into text files, where 
+get_energies{
+	sweep gamma
+}
