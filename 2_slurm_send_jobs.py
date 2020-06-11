@@ -43,7 +43,7 @@ def editInputFile(params, vals):
 os.system("1_slurm_update_jobs.py")
 
 #READ jobsToSend.txt TO A LIST TO A LIST
-f = open("vanishedJobs.txt", "r")
+f = open("failedJobs.txt", "r")
 jobsToSend = [line.rstrip('\n') for line in f]	#strip the newline characters
 
 count=0
@@ -51,7 +51,14 @@ count=0
 for i in range(len(jobsToSend)):
 	jobname = jobsToSend[i]
 
-	#make a new folder
+
+	#check if the folder exists
+
+	if os.path.exists("results/{0}".format(jobname)):
+		#if it exists, the job has failed, remove it:
+		os.system("rm -rf results/{0}/".format(jobname))	
+
+	#make an empty folder
 	os.mkdir("results/{0}".format(jobname))
 
 	#save the input file and move it to the corresponding folder

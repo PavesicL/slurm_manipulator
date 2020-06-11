@@ -6,12 +6,12 @@ Counts the finished jobs - those that have an empty file called DONE in the fold
 import os
 import sys
 import re
-from help_functions import readNameFile
+from help_functions import readNameFile, readNameFile_batchParams
 
 ################################
 _, where = readNameFile_batchParams("nameFile")
 
-if where == "MAISTER"
+if where == "MAISTER":
 	username = "lukap"
 elif where == "SPINON":
 	username = "pavesic"
@@ -34,8 +34,9 @@ f = open("statJobs.txt", "r")
 queue = [line.rstrip('\n').strip() for line in f]	#strip the newline characters and whitespace
 
 #GET FINISHED JOBS:
-done, running = [], []
+done, start = [], []
 #RUN OVER ALL SUBFOLDERS
+#for all folders, if the job has already created DONE, put the jobname in list done, else if it has created the START file, put it into start
 all_in_folder = os.listdir("results")
 for folder in all_in_folder:
 	if os.path.isdir("results/"+folder):
@@ -46,28 +47,35 @@ for folder in all_in_folder:
 			done.append(folder)	
 		elif "START" in allFiles:
 			#this job is running
-			running.append(folder)	
+			start.append(folder)	
 		
 
 #COUNT THE JOBS
-queingJobs, runningJobs, finishedJobs, vanishedJobs = [], [], [], []
+queingJobs, runningJobs, finishedJobs, failedJobs = [], [], [], []
 for i in range(len(jobsToSend)):
 	job = jobsToSend[i]
-	if job in queue and not job in running:
-		queingJobs.append(job)
-	elif job in done:
-		finishedJobs.append(job)
-	elif job in running:
-		runningJobs.append(job)	
+	
+	#if jobname is found in queue, it is either queing or running
+	if job in queue:
+		if job in start:
+			runningJobs.append(job)
+		else:
+			queingJobs.append(job)
+
+	#if jobname is not foud in queue, it is either finished or failed
 	else:
-		vanishedJobs.append(job)	
+		if job in done:
+			finishedJobs.append(job)
+		else:
+			failedJobs.append(job)	
+
 
 #WRITE THE NAMES OF THE FINISHED JOBS TO FILE
 with open("finishedJobs.txt", "w") as ff:
 	ff.writelines([i+"\n" for i in finishedJobs])
 
 #WRITE THE NAMES OF THE VANISHED JOBS TO FILE
-with open("vanishedJobs.txt", "w") as ff:
-	ff.writelines([i+"\n" for i in vanishedJobs])
+with open("failedJobs.txt", "w") as ff:
+	ff.writelines([i+"\n" for i in failedJobs])
 
-print("There is {0} jobs queueing, {1} running, {2} finished and {3} vanished jobs.".format(len(queingJobs), len(runningJobs), len(finishedJobs), len(vanishedJobs)))
+print("There is {0} jobs queueing, {1} running, {2} finished and {3} failed jobs.".format(len(queingJobs), len(runningJobs), len(finishedJobs), len(failedJobs)))
