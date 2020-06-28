@@ -108,7 +108,8 @@ def readNameFile_batchParams(file):
 			f = re.search("OMP_NUM_THREADS (.*)", line)
 			g = re.search("path (.*)", line)
 			
-			#g = re.search("", line)	add new parameters here
+			#h = re.search("", line)	add new parameters here
+			
 			if aa:
 				where = aa.group(1)
 
@@ -128,7 +129,7 @@ def readNameFile_batchParams(file):
 			if batchparamsCheck and f:
 				ompThreads = f.group(1)
 				dictparams["OMP_NUM_THREADS"] = ompThreads	
-	
+
 			if batchparamsCheck and g:
 				path = g.group(1)
 				dictparams["path"] = path	
@@ -141,17 +142,18 @@ def writeBatchScript(paramsDict, jobname, where):
 	Reads the parameters from the dictionary and writes the batch script. 
 	The where parameter takes either MAISTER or SPINON, otherwise fails. On MAISTER, the singularity container is used.
 	"""
+	
+	scriptname="runJob"	
 
 	#write the jobname into the script - this will format all lines in script which have some type of Python formatting string options, eg. {}, {1}, ...
 	with open("SAMPLEscript", "r") as Ss:
-		with open("results/{0}/script".format(jobname), "w+") as s:
+		with open("results/{0}/{1}".format(jobname, scriptname), "w+") as s:
 			for line in Ss:
 				s.write(line.format(jobname) + "\n")
 
-	os.system("chmod +x results/{0}/script".format(jobname))			
-
+	os.system("chmod +x results/{0}/{1}".format(jobname, scriptname))			
+	
 	with open("sendJob", "w") as job:
-
 		job.writelines('#!/bin/bash\n')
 		job.writelines('#SBATCH --mem-per-cpu=4000\n')
 		job.writelines('#SBATCH --job-name={0}\n'.format(jobname))
@@ -170,16 +172,17 @@ def writeBatchScript(paramsDict, jobname, where):
 
 		if where == "MAISTER":
 			if "path" in paramsDict and "OMP_NUM_THREADS" in paramsDict:
-				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} SINGULARITYENV_PREPEND_PATH={1} singularity exec /ceph/sys/singularity/gimkl-2018b.simg {2}\n"
-																												.format(paramsDict["OMP_NUM_THREADS"], paramsDict["path"], script))	
+				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} SINGULARITYENV_PREPEND_PATH={1} singularity exec /ceph/sys/singularity/gimkl-2018b.simg results/{2}/{3}\n"
+																												.format(paramsDict["OMP_NUM_THREADS"], paramsDict["path"], jobname, scriptname))	
 			elif "path" in paramsDict:
-				job.writelines("SINGULARITYENV_PREPEND_PATH={0} singularity exec /ceph/sys/singularity/gimkl-2018b.simg {1}\n".format(paramsDict["path"], script))	
+				job.writelines("SINGULARITYENV_PREPEND_PATH={0} singularity exec /ceph/sys/singularity/gimkl-2018b.simg {1}\n".format(paramsDict["path"], scriptname))	
 			elif "OMP_NUM_THREADS" in paramsDict:
-				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} singularity exec /ceph/sys/singularity/gimkl-2018b.simg {1}\n".format(paramsDict["OMP_NUM_THREADS"], script))				
+				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} singularity exec /ceph/sys/singularity/gimkl-2018b.simg {1}\n".format(paramsDict["OMP_NUM_THREADS"],scriptname))				
 							
 			else:
-				job.writelines("singularity exec /ceph/sys/singularity/gimkl-2018b.simg {0}\n".format(script))				
-		
+				job.writelines("singularity exec /ceph/sys/singularity/gimkl-2018b.simg {0}\n".format(scriptname))				
+
+
 		elif where == "SPINON":
 			if "path" in paramsDict:
 				job.writelines("export PATH={0}:$PATH\n".format(paramsDict["path"]))
@@ -191,7 +194,11 @@ def writeBatchScript(paramsDict, jobname, where):
 			job.writelines("touch results/{0}/DONE\n".format(jobname))
 
 		else:
-			print("SPECIFY WHERE!")
+			print("SPECIFY WHERE! (SPINON or MAISTER)")
 			exit()		
+
+	if where=="MAISTER":
+		#os.system("mv sendJob results/{0}/".format(jobname))
+		pass
 
 	return None

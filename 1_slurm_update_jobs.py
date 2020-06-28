@@ -29,7 +29,7 @@ jobsToSend = [line.rstrip('\n') for line in f]	#strip the newline characters
 
 
 #PARSE THE QUEUE
-os.system('squeue -u {0} -o "%.50j" -h > statJobs.txt'.format(username))
+os.system('squeue -u {0} -o "%.100j" -h > statJobs.txt'.format(username))
 f = open("statJobs.txt", "r")
 queue = [line.rstrip('\n').strip() for line in f]	#strip the newline characters and whitespace
 

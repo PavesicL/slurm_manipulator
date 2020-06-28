@@ -53,7 +53,6 @@ for i in range(len(jobsToSend)):
 
 
 	#check if the folder exists
-
 	if os.path.exists("results/{0}".format(jobname)):
 		#if it exists, the job has failed, remove it:
 		os.system("rm -rf results/{0}/".format(jobname))	
@@ -71,10 +70,12 @@ for i in range(len(jobsToSend)):
 
 	writeBatchScript(paramsDict, jobname, where)
 
-	#sbatch to send job
-	os.system("sbatch sendJob")
+	#sbatch to send job	
+	os.system("sbatch sendJob".format(jobname))
+
 
 	count+=1
+
 
 if count>0:
 	print("Sent {0} jobs.".format(count))
