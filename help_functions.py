@@ -190,8 +190,8 @@ def writeBatchScript(paramsDict, jobname, where):
 
 		if where == "MAISTER":
 			if "path" in paramsDict and "OMP_NUM_THREADS" in paramsDict:
-				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} SINGULARITYENV_PREPEND_PATH={1} singularity exec /ceph/sys/singularity/gimkl-2018b.simg results/{2}/{3}\n"
-																												.format(paramsDict["OMP_NUM_THREADS"], paramsDict["path"], jobname, scriptname))	
+				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} SINGULARITYENV_PREPEND_PATH={1} singularity exec /ceph/sys/singularity/gimkl-2018b.simg {2}\n"
+																												.format(paramsDict["OMP_NUM_THREADS"], paramsDict["path"], scriptname))	
 			elif "path" in paramsDict:
 				job.writelines("SINGULARITYENV_PREPEND_PATH={0} singularity exec /ceph/sys/singularity/gimkl-2018b.simg {1}\n".format(paramsDict["path"], scriptname))	
 			elif "OMP_NUM_THREADS" in paramsDict:
