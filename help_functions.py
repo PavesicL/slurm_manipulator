@@ -108,6 +108,10 @@ def readNameFile_batchParams(file):
 			f = re.search("OMP_NUM_THREADS (.*)", line)
 			g = re.search("path (.*)", line)
 			
+			h = re.search("module (.*)", line)	
+
+			i = re.search("constraint (.*)", line)
+
 			#h = re.search("", line)	add new parameters here
 			
 			if aa:
@@ -118,21 +122,31 @@ def readNameFile_batchParams(file):
 			if b:
 				batchparamsCheck = False
 
-			if batchparamsCheck and d:
-				time = d.group(1)
-				dictparams["time"] = time
+			if batchparamsCheck:
+				if d:
+					time = d.group(1)
+					dictparams["time"] = time
 
-			if batchparamsCheck and e:
-				cpusPerTask = e.group(1)
-				dictparams["cpus-per-task"] = cpusPerTask
+				if e:
+					cpusPerTask = e.group(1)
+					dictparams["cpus-per-task"] = cpusPerTask
 
-			if batchparamsCheck and f:
-				ompThreads = f.group(1)
-				dictparams["OMP_NUM_THREADS"] = ompThreads	
+				if f:	
+					ompThreads = f.group(1)
+					dictparams["OMP_NUM_THREADS"] = ompThreads	
 
-			if batchparamsCheck and g:
-				path = g.group(1)
-				dictparams["path"] = path	
+				if g:	
+					path = g.group(1)
+					dictparams["path"] = path	
+
+				if h:
+					ml = h.group(1)
+					dictparams["ml"] = ml	
+				
+				if i:
+					constraint = i.group(1)
+					dictparams["constraint"] = constraint
+						
 
 	return dictparams, where		
 
@@ -149,11 +163,12 @@ def writeBatchScript(paramsDict, jobname, where):
 	with open("SAMPLEscript", "r") as Ss:
 		with open("results/{0}/{1}".format(jobname, scriptname), "w+") as s:
 			for line in Ss:
-				s.write(line.format(jobname) + "\n")
+				s.write(line.format(jobname))
 
 	os.system("chmod +x results/{0}/{1}".format(jobname, scriptname))			
-	
-	with open("sendJob", "w") as job:
+
+	#create a sendJob file
+	with open("results/{0}/sendJob".format(jobname), "w") as job:
 		job.writelines('#!/bin/bash\n')
 		job.writelines('#SBATCH --mem-per-cpu=4000\n')
 		job.writelines('#SBATCH --job-name={0}\n'.format(jobname))
@@ -169,6 +184,9 @@ def writeBatchScript(paramsDict, jobname, where):
 		else:	
 			job.writelines('#SBATCH --cpus-per-task=1\n')
 		
+		if "constraint" in paramsDict:
+			job.writelines('#SBATCH --constraint={0}\n'.format(paramsDict["constraint"]))
+
 
 		if where == "MAISTER":
 			if "path" in paramsDict and "OMP_NUM_THREADS" in paramsDict:
@@ -188,10 +206,15 @@ def writeBatchScript(paramsDict, jobname, where):
 				job.writelines("export PATH={0}:$PATH\n".format(paramsDict["path"]))
 			if "OMP_NUM_THREADS" in paramsDict:
 				job.writelines("export OMP_NUM_THREADS={0}\n".format(paramsDict["OMP_NUM_THREADS"]))	
+			if "ml" in paramsDict:
+				job.writelines("ml "+ paramsDict["ml"] + "\n")
 
-			job.writelines("touch results/{0}/START\n".format(jobname))	
-			job.writelines("results/{0}/script\n".format(jobname))	
-			job.writelines("touch results/{0}/DONE\n".format(jobname))
+			#job.writelines("cd results/{0}/\n".format(jobname))	
+			#job.writelines("touch START\n")	
+			job.writelines("./{0}\n".format(scriptname))	
+			#job.writelines("results/{0}/{1}\n".format(jobname, scriptname))	
+			
+			#job.writelines("touch DONE\n")
 
 		else:
 			print("SPECIFY WHERE! (SPINON or MAISTER)")
