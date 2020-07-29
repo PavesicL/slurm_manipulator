@@ -170,7 +170,7 @@ def writeBatchScript(paramsDict, jobname, where):
 	#create a sendJob file
 	with open("results/{0}/sendJob".format(jobname), "w") as job:
 		job.writelines('#!/bin/bash\n')
-		job.writelines('#SBATCH --mem-per-cpu=4000\n')
+		job.writelines('#SBATCH --mem-per-cpu=4000\n')				#on SPINON, this is amount of memory on each processor. Use 4000, if you need more memory, increase cpus-per-task.
 		job.writelines('#SBATCH --job-name={0}\n'.format(jobname))
 
 
