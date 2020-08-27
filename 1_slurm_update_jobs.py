@@ -78,4 +78,8 @@ with open("finishedJobs.txt", "w") as ff:
 with open("failedJobs.txt", "w") as ff:
 	ff.writelines([i+"\n" for i in failedJobs])
 
+#WRITE THE NAMES OF THE RUNNING JOBS TO FILE
+with open("runningJobs.txt", "w") as ff:
+	ff.writelines([i+"\n" for i in runningJobs])
+
 print("There is {0} jobs queueing, {1} running, {2} finished and {3} failed jobs.".format(len(queingJobs), len(runningJobs), len(finishedJobs), len(failedJobs)))
