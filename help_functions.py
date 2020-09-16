@@ -32,7 +32,7 @@ def readNameFile(file, regex=False):
 			b = re.search("params\s*{", line) 
 			c = re.search("}\s*endparams", line) 
 			
-			d = re.search("\s*(\w*)\s*(\w*)", line)
+			d = re.search("\s*(\w*)\s*(\S*)", line)
 			
 			if line[0] == "#":	#this line is a comment
 				pass
@@ -111,7 +111,7 @@ def readNameFile_batchParams(file):
 			h = re.search("module (.*)", line)	
 
 			i = re.search("constraint (.*)", line)
-
+			j = re.search("mem-per-cpu (.*)", line)
 			#h = re.search("", line)	add new parameters here
 			
 			if aa:
@@ -146,7 +146,10 @@ def readNameFile_batchParams(file):
 				if i:
 					constraint = i.group(1)
 					dictparams["constraint"] = constraint
-						
+				
+				if j:
+					memPerCpu = j.group(1)
+					dictparams["mem-per-cpu"] = memPerCpu							
 
 	return dictparams, where		
 
@@ -170,9 +173,7 @@ def writeBatchScript(paramsDict, jobname, where):
 	#create a sendJob file
 	with open("results/{0}/sendJob".format(jobname), "w") as job:
 		job.writelines('#!/bin/bash\n')
-		job.writelines('#SBATCH --mem-per-cpu=4000\n')				#on SPINON, this is amount of memory on each processor. Use 4000, if you need more memory, increase cpus-per-task.
 		job.writelines('#SBATCH --job-name={0}\n'.format(jobname))
-
 
 		if "time" in paramsDict:
 			job.writelines('#SBATCH --time={0}\n'.format(paramsDict["time"]))
@@ -187,15 +188,25 @@ def writeBatchScript(paramsDict, jobname, where):
 		if "constraint" in paramsDict:
 			job.writelines('#SBATCH --constraint={0}\n'.format(paramsDict["constraint"]))
 
+		if "mem-per-cpu" in paramsDict:
+			job.writelines('#SBATCH --mem-per-cpu={0}\n'.format(paramsDict["mem-per-cpu"]))
+		else:
+			job.writelines('#SBATCH --mem-per-cpu=4000\n')
+	
+
+
 
 		if where == "MAISTER":
+			#singularityPath = "/ceph/sys/singularity/gimkl-2018b.simg" OLD
+			singularityPath = "/ceph/grid/home/lukap/containers/foss2020_etc.sif" 
+
 			if "path" in paramsDict and "OMP_NUM_THREADS" in paramsDict:
-				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} SINGULARITYENV_PREPEND_PATH={1} singularity exec /ceph/sys/singularity/gimkl-2018b.simg ./{2}\n"
-																												.format(paramsDict["OMP_NUM_THREADS"], paramsDict["path"], scriptname))	
+				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} SINGULARITYENV_PREPEND_PATH={1} singularity exec {3} ./{2}\n"
+																												.format(paramsDict["OMP_NUM_THREADS"], paramsDict["path"], scriptname, singularityPath))	
 			elif "path" in paramsDict:
-				job.writelines("SINGULARITYENV_PREPEND_PATH={0} singularity exec /ceph/sys/singularity/gimkl-2018b.simg ./{1}\n".format(paramsDict["path"], scriptname))	
+				job.writelines("SINGULARITYENV_PREPEND_PATH={0} singularity exec {2} ./{1}\n".format(paramsDict["path"], scriptname, singularityPath))	
 			elif "OMP_NUM_THREADS" in paramsDict:
-				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} singularity exec /ceph/sys/singularity/gimkl-2018b.simg ./{1}\n".format(paramsDict["OMP_NUM_THREADS"],scriptname))				
+				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} singularity exec {2} ./{1}\n".format(paramsDict["OMP_NUM_THREADS"],scriptname, singularityPath))				
 							
 			else:
 				job.writelines("singularity exec /ceph/sys/singularity/gimkl-2018b.simg {0}\n".format(scriptname))				

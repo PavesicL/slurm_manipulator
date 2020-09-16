@@ -34,7 +34,8 @@ f = open("statJobs.txt", "r")
 queue = [line.rstrip('\n').strip() for line in f]	#strip the newline characters and whitespace
 
 #GET FINISHED JOBS:
-done, start = [], []
+done, failed, start = [], [], []
+nonEmptySlurm = False
 #RUN OVER ALL SUBFOLDERS
 #for all folders, if the job has already created DONE, put the jobname in list done, else if it has created the START file, put it into start
 all_in_folder = os.listdir("results")
@@ -42,9 +43,24 @@ for folder in all_in_folder:
 	if os.path.isdir("results/"+folder):
 		#list everything in folder
 		allFiles = os.listdir("results/"+folder)
-		if "DONE" in allFiles:
+
+		#find the slurm file:
+		for file in allFiles:
+			a = re.match("(slurm-\d+.*)", file)
+			if a:
+				slurmFile=a.group(1)
+				#check if there is slurm output - if there is, the job has failed with some error
+				nonEmptySlurm = os.stat("results/"+folder+"/"+slurmFile).st_size != 0
+				break
+
+		if "DONE" in allFiles and not nonEmptySlurm:
 			#this job is finished
-			done.append(folder)	
+			done.append(folder)
+
+		if "DONE" in allFiles and nonEmptySlurm:
+			#this job is finished
+			failed.append(folder)			
+
 		elif "START" in allFiles:
 			#this job is running
 			start.append(folder)	
