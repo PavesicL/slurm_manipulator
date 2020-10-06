@@ -15,6 +15,8 @@ if where == "MAISTER":
 	username = "lukap"
 elif where == "SPINON":
 	username = "pavesic"
+elif where == "NSC":
+	username = "lukap"
 else: 
 	print("Specify where!")
 	exit()
@@ -44,6 +46,7 @@ for folder in all_in_folder:
 		#list everything in folder
 		allFiles = os.listdir("results/"+folder)
 
+		"""
 		#find the slurm file:
 		for file in allFiles:
 			a = re.match("(slurm-\d+.*)", file)
@@ -52,6 +55,8 @@ for folder in all_in_folder:
 				#check if there is slurm output - if there is, the job has failed with some error
 				nonEmptySlurm = os.stat("results/"+folder+"/"+slurmFile).st_size != 0
 				break
+		"""
+
 
 		if "DONE" in allFiles and not nonEmptySlurm:
 			#this job is finished

@@ -112,6 +112,8 @@ def readNameFile_batchParams(file):
 
 			i = re.search("constraint (.*)", line)
 			j = re.search("mem-per-cpu (.*)", line)
+			k = re.search("profiling", line)
+
 			#h = re.search("", line)	add new parameters here
 			
 			if aa:
@@ -149,7 +151,11 @@ def readNameFile_batchParams(file):
 				
 				if j:
 					memPerCpu = j.group(1)
-					dictparams["mem-per-cpu"] = memPerCpu							
+					dictparams["mem-per-cpu"] = memPerCpu
+
+				if k:
+					dictparams["profiling"] = True
+
 
 	return dictparams, where		
 
@@ -193,13 +199,18 @@ def writeBatchScript(paramsDict, jobname, where):
 		else:
 			job.writelines('#SBATCH --mem-per-cpu=4000\n')
 	
+		if "profiling" in paramsDict:
+			job.writelines('#SBATCH --profile=<all>\n')
 
 
 
-		if where == "MAISTER":
+		if where == "MAISTER" or where == "NSC":
 			#singularityPath = "/ceph/sys/singularity/gimkl-2018b.simg" OLD
-			singularityPath = "/ceph/grid/home/lukap/containers/foss2020_etc.sif" 
-
+			if where == "MAISTER":
+				singularityPath = "/ceph/grid/home/lukap/containers/foss2020_etc.sif" 
+			elif where == "NSC":
+				singularityPath = "/ceph/grid/home/lukap/containers/foss2020_etc.sif" 
+			
 			if "path" in paramsDict and "OMP_NUM_THREADS" in paramsDict:
 				job.writelines("SINGULARITYENV_OMP_NUM_THREADS={0} SINGULARITYENV_PREPEND_PATH={1} singularity exec {3} ./{2}\n"
 																												.format(paramsDict["OMP_NUM_THREADS"], paramsDict["path"], scriptname, singularityPath))	
@@ -227,8 +238,8 @@ def writeBatchScript(paramsDict, jobname, where):
 			
 			#job.writelines("touch DONE\n")
 
-		else:
-			print("SPECIFY WHERE! (SPINON or MAISTER)")
+		elif where != "MAISTER" or where != "NSC" or where != "SPINON":
+			print("SPECIFY WHERE! (SPINON or MAISTER or NSC)")
 			exit()		
 
 	if where=="MAISTER":
